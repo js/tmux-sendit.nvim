@@ -1,9 +1,92 @@
-# Tmux Send It
+# tmux-sendit.nvim
 
-Send selected buffer contents or filepath to another tmux pane
+send selected buffer contents or file paths to another tmux pane.
 
-`:SenditSelection` - Uses the current selection for sendit
-`:SenditPath` - Uses the current relative, to the project root file path for sendit
-`:SenditFullPath` - Uses the full path
+after executing a command, a picker is presented where a target tmux pane can be selected. the content is then inserted into that pane as if you typed it.
 
-After executing the commit a picker will be presented where a target tmux pane can be selected for the selected content to be inserted into, as if you typed in to that pane
+## requirements
+
+- neovim >= 0.9
+- tmux
+
+## installation
+
+### lazy.nvim
+
+```lua
+{
+  "js/tmux-sendit.nvim",
+  opts = {},
+}
+```
+
+### packer.nvim
+
+```lua
+use {
+  "js/tmux-sendit.nvim",
+  config = function()
+    require("sendit").setup({})
+  end,
+}
+```
+
+### mini.deps
+
+```lua
+MiniDeps.add({
+  source = "js/tmux-sendit.nvim",
+})
+require("sendit").setup({})
+```
+
+## configuration
+
+these are the defaults — pass any overrides to `setup()`:
+
+````lua
+require("sendit").setup({
+  -- shell command used to send text to a tmux pane
+  cmd = { "tmux", "send-keys", "-t" },
+
+  -- only list panes from the current tmux session in the picker
+  only_current_session = true,
+
+  -- prefix/suffix wrapped around selections sent to the pane
+  selection_prefix = "```\n",
+  selection_suffix = "\n```\n",
+
+  -- prefix/suffix wrapped around file paths sent to the pane
+  path_prefix = "@",
+  path_suffix = " ",
+})
+````
+
+## commands & keybindings
+
+No keybindings are set by default. Bind the functions you need in your config:
+
+```lua
+-- lazy.nvim example with keybindings
+{
+  "js/tmux-sendit.nvim",
+  keys = {
+    { "<leader>as", function() require("sendit").send_selection() end, mode = "v", desc = "Send selection to tmux pane" },
+    { "<leader>af", function() require("sendit").send_rel_path() end, mode = "v", desc = "Send relative file path to tmux pane" },
+    { "<leader>aF", function() require("sendit").send_abs_path() end, mode = "v", desc = "Send absolute file path to tmux pane" },
+  },
+  opts = {},
+}
+```
+
+#### Commands
+
+| command / key       | mode   | description                         |
+| ------------------- | ------ | ----------------------------------- |
+| `:Sendit selection` | visual | send the current visual selection   |
+| `:Sendit path`      | normal | send the project-relative file path |
+| `:Sendit fullpath`  | normal | send the absolute file path         |
+
+## license
+
+MIT

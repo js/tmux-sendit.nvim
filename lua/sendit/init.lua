@@ -22,10 +22,6 @@ M.config = defaults
 function M.setup(opts)
 	M.config = vim.tbl_deep_extend("force", defaults, opts or {})
 
-	vim.keymap.set("v", "<leader>as", M.send_selection, { desc = "Send selection to tmux pane" })
-	vim.keymap.set("v", "<leader>af", M.send_rel_path, { desc = "Send relative file path to tmux pane" })
-	vim.keymap.set("v", "<leader>aF", M.send_abs_path, { desc = "Send absolute file path to tmux pane" })
-
 	local subcommands = {
 		selection = M.send_selection,
 		path = M.send_rel_path,
