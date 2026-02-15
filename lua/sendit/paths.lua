@@ -21,7 +21,7 @@ local function _get_root()
     return root
   end
 
-  -- fall abck to current working directory
+  -- fall back to current working directory
   return vim.fn.getcwd()
 end
 

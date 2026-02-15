@@ -76,7 +76,9 @@ local function send_to_pane(text, pane_id)
         vim.notify("sendit: command failed: " .. (result.stderr or ""), vim.log.levels.ERROR)
       end)
     else
-      vim.notify("Sent to pane '" .. pane_id .. "'")
+      vim.schedule(function()
+        vim.notify("Sent to pane '" .. pane_id .. "'")
+      end)
     end
   end)
 end
