@@ -19,6 +19,26 @@ function M.setup(opts)
 	vim.keymap.set("v", "<leader>as", function()
 		M.send_selection()
 	end, { desc = "Send selection to tmux pane" })
+
+	local subcommands = {
+		selection = M.send_selection,
+	}
+
+	vim.api.nvim_create_user_command("Sendit", function(args)
+		local sub = args.fargs[1]
+		local fn = subcommands[sub]
+		if fn then
+			fn()
+		else
+			vim.notify("Sendit: unknown subcommand '" .. (sub or "") .. "'", vim.log.levels.ERROR)
+		end
+	end, {
+		nargs = 1, -- number of args the Sendit command takes
+		complete = function() -- autocomplete
+			return vim.tbl_keys(subcommands)
+		end,
+		desc = "Sendit commands",
+	})
 end
 
 ---@return string command
