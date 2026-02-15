@@ -1,8 +1,8 @@
 # tmux-sendit.nvim
 
-send selected buffer contents or file paths to another tmux pane.
+Send selected buffer contents or file paths to another tmux pane without leaving neovim.
 
-after executing a command, a picker is presented where a target tmux pane can be selected. the content is then inserted into that pane as if you typed it.
+Select code or a file path, pick a target pane, and the content is inserted as if you typed it. Useful for feeding code snippets, file references, or context to a CLI tool running in another pane - like sending selections to a claude code session without constantly switching between tmux panes.
 
 ## requirements
 
