@@ -5,8 +5,14 @@ local M = {}
 local defaults = {
 	cmd = { "tmux", "send-keys", "-t" },
 	only_current_session = true, -- should only panes from the current session be listed in the picker
-	selection_prefix = "", -- prefix for the selection that gets sent to the tmux pane
-	path_prefix = "@", -- prefix for paths that gets sent to the tmux pane
+
+	-- prefix/suffix for the selection that gets sent to the tmux pane
+	selection_prefix = "```\n",
+	selection_suffix = "\n```\n",
+
+	-- prefix/suffix for paths that gets sent to the tmux pane
+	path_prefix = "@",
+	path_suffix = " ",
 }
 
 ---@type sendit.Config
@@ -16,9 +22,9 @@ M.config = defaults
 function M.setup(opts)
 	M.config = vim.tbl_deep_extend("force", defaults, opts or {})
 
-	vim.keymap.set("v", "<leader>ms", M.send_selection, { desc = "Send selection to tmux pane" })
-	vim.keymap.set("v", "<leader>mf", M.send_rel_path, { desc = "Send relative file path to tmux pane" })
-	vim.keymap.set("v", "<leader>mF", M.send_abs_path, { desc = "Send absolute file path to tmux pane" })
+	vim.keymap.set("v", "<leader>as", M.send_selection, { desc = "Send selection to tmux pane" })
+	vim.keymap.set("v", "<leader>af", M.send_rel_path, { desc = "Send relative file path to tmux pane" })
+	vim.keymap.set("v", "<leader>aF", M.send_abs_path, { desc = "Send absolute file path to tmux pane" })
 
 	local subcommands = {
 		selection = M.send_selection,
@@ -143,14 +149,14 @@ end
 function M.send_rel_path()
 	local path = _get_relative_path()
 	select_pane(function(pane_id)
-		send_to_pane(M.config.path_prefix .. path, pane_id)
+		send_to_pane(M.config.path_prefix .. path, pane_id .. M.config.path_suffix)
 	end)
 end
 
 function M.send_abs_path()
 	local abs_path = vim.api.nvim_buf_get_name(0)
 	select_pane(function(pane_id)
-		send_to_pane(M.config.path_prefix .. abs_path, pane_id)
+		send_to_pane(M.config.path_prefix .. abs_path .. M.config.path_suffix, pane_id)
 	end)
 end
 
@@ -166,7 +172,7 @@ end
 
 ---@param lines string[]
 function M.send_text(lines)
-	local text = M.config.selection_prefix .. table.concat(lines, "\n")
+	local text = M.config.selection_prefix .. table.concat(lines, "\n") .. M.config.selection_suffix
 
 	select_pane(function(pane_id)
 		send_to_pane(text, pane_id)
