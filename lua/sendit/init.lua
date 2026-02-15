@@ -30,7 +30,15 @@ function M.setup(opts)
 		local sub = args.fargs[1]
 		local fn = subcommands[sub]
 		if fn then
-			fn()
+			if sub == "selection" and args.range > 0 then
+				-- we got a line range from the command line
+				local start_pos = vim.fn.getpos("'<")
+				local end_pos = vim.fn.getpos("'>")
+				local lines = vim.fn.getregion(start_pos, end_pos, { type = vim.fn.visualmode() })
+				M.send_text(lines)
+			else
+				fn()
+			end
 		else
 			vim.notify("Sendit: unknown subcommand '" .. (sub or "") .. "'", vim.log.levels.ERROR)
 		end
@@ -40,7 +48,7 @@ function M.setup(opts)
 			return vim.tbl_keys(subcommands)
 		end,
 		desc = "Sendit commands",
-		-- TODO: range = true
+		range = true,
 	})
 end
 
@@ -152,6 +160,12 @@ function M.send_selection()
 	local end_pos = vim.fn.getpos(".")
 	local mode = vim.fn.mode()
 	local lines = vim.fn.getregion(start_pos, end_pos, { type = mode })
+
+	M.send_text(lines)
+end
+
+---@param lines string[]
+function M.send_text(lines)
 	local text = M.config.selection_prefix .. table.concat(lines, "\n")
 
 	select_pane(function(pane_id)
