@@ -4,8 +4,9 @@ local M = {}
 ---@field cmd string[] Shell command to run on selected text
 local defaults = {
 	cmd = { "tmux", "send-keys", "-t" },
-	only_current_session = true,
-	selection_prefix = "\n\n",
+	only_current_session = true, -- should only panes from the current session be listed in the picker
+	selection_prefix = "", -- prefix for the selection that gets sent to the tmux pane
+	path_prefix = "@", -- prefix for paths that gets sent to the tmux pane
 }
 
 ---@type sendit.Config
@@ -16,7 +17,7 @@ function M.setup(opts)
 	M.config = vim.tbl_deep_extend("force", defaults, opts or {})
 
 	vim.keymap.set("v", "<leader>as", function()
-		M.sendSelection()
+		M.send_selection()
 	end, { desc = "Send selection to tmux pane" })
 end
 
@@ -36,18 +37,22 @@ end
 
 ---@param on_select fun(pane_id: string)
 local function select_pane(on_select)
-	local panes = vim.fn.systemlist(tmux_list_command())
+	local all_panes = vim.fn.systemlist(tmux_list_command())
+	local panes = vim.iter(all_panes)
+		:map(function(pane)
+			local id, rest = pane:match("^(%S+)%s(.+)$")
+			return { id = id, command = rest }
+		end)
+		:totable()
 	-- TODO: try telescope -> snacks -> vim.ui.select
 	vim.ui.select(panes, {
 		prompt = "Select target tmux pane:",
-		format_item = function(item)
-			return item
+		format_item = function(pane)
+			return pane.id .. " " .. pane.command
 		end,
 	}, function(choice)
 		if choice then
-			-- vim.notify("Selected pane: " .. choice)
-			local pane_id = vim.split(choice, " ")[1]
-			on_select(pane_id)
+			on_select(choice.id)
 		end
 	end)
 end
@@ -55,7 +60,6 @@ end
 ---@param text string
 ---@param pane_id string
 local function send_to_pane(text, pane_id)
-	-- local cmd = vim.list_extend(vim.list_slice(M.config.cmd), { text })
 	local cmd = tmux_send_command(text, pane_id)
 	vim.system(cmd, {}, function(result)
 		if result.code ~= 0 then
@@ -68,7 +72,7 @@ local function send_to_pane(text, pane_id)
 	end)
 end
 
-function M.sendSelection()
+function M.send_selection()
 	-- capture positions and mode while still in visual mode
 	local start_pos = vim.fn.getpos("v")
 	local end_pos = vim.fn.getpos(".")
