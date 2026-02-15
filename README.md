@@ -8,14 +8,12 @@ Select code or a file path, pick a target pane, and the content is inserted as i
 
 <img width="1670" height="899" alt="image" src="https://github.com/user-attachments/assets/b0d932c9-7167-499c-a4f5-6010458181fd" />
 
-
-
-## requirements
+## Requirements
 
 - neovim >= 0.9
 - tmux
 
-## installation
+## Installation
 
 ### lazy.nvim
 
@@ -46,9 +44,9 @@ MiniDeps.add({
 require("sendit").setup({})
 ```
 
-## configuration
+## Configuration
 
-these are the defaults — pass any overrides to `setup()`:
+These are the defaults — pass any overrides to `setup()`:
 
 ````lua
 require("sendit").setup({
@@ -68,7 +66,7 @@ require("sendit").setup({
 })
 ````
 
-## commands & keybindings
+## Commands & Keybindings
 
 No keybindings are set by default. Bind the functions you need in your config:
 
@@ -93,6 +91,6 @@ No keybindings are set by default. Bind the functions you need in your config:
 | `:Sendit path`      | normal | send the project-relative file path |
 | `:Sendit fullpath`  | normal | send the absolute file path         |
 
-## license
+## License
 
 MIT
