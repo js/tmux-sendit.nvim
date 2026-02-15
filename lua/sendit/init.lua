@@ -98,7 +98,7 @@ end
 function M.send_rel_path()
   local path = paths.get_relative_path()
   select_pane(function(pane_id)
-    send_to_pane(M.config.path_prefix .. path, pane_id .. M.config.path_suffix)
+    send_to_pane(M.config.path_prefix .. path .. M.config.path_suffix, pane_id)
   end)
 end
 
