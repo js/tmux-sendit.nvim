@@ -4,6 +4,12 @@ Send selected buffer contents or file paths to another tmux pane without leaving
 
 Select code or a file path, pick a target pane, and the content is inserted as if you typed it. Useful for feeding code snippets, file references, or context to a CLI tool running in another pane - like sending selections to a claude code session without constantly switching between tmux panes.
 
+<img width="1670" height="899" alt="image" src="https://github.com/user-attachments/assets/5976a263-0b48-4a6e-9c36-784fb8080cad" />
+
+<img width="1670" height="899" alt="image" src="https://github.com/user-attachments/assets/b0d932c9-7167-499c-a4f5-6010458181fd" />
+
+
+
 ## requirements
 
 - neovim >= 0.9
