@@ -57,8 +57,8 @@ require("sendit").setup({
   only_current_session = true,
 
   -- prefix/suffix wrapped around selections sent to the pane
-  selection_prefix = "```\n",
-  selection_suffix = "\n```\n",
+  selection_prefix = "\n```",
+  selection_suffix = "```\n",
 
   -- prefix/suffix wrapped around file paths sent to the pane
   path_prefix = "@",
@@ -87,11 +87,11 @@ No keybindings are set by default. Bind the functions you need in your config:
 
 #### Commands
 
-| command / key       | mode   | description                         |
-| ------------------- | ------ | ----------------------------------- |
-| `:Sendit selection` | visual | send the current visual selection   |
-| `:Sendit path`      | normal | send the project-relative file path |
-| `:Sendit fullpath`  | normal | send the absolute file path         |
+| command / key        | mode   | description                         |
+| -------------------- | ------ | ----------------------------------- |
+| `:Sendit selection`  | visual | send the current visual selection   |
+| `:Sendit path`       | normal | send the project-relative file path |
+| `:Sendit fullpath`   | normal | send the absolute file path         |
 | `:Sendit diagnostic` | normal | send diagnostics to tmux pane       |
 
 ## License
