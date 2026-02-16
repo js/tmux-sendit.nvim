@@ -7,8 +7,8 @@ local defaults = {
   only_current_session = true, -- should only panes from the current session be listed in the picker
 
   -- prefix/suffix for the selection that gets sent to the tmux pane
-  selection_prefix = "```\n",
-  selection_suffix = "\n```\n",
+  selection_prefix = "\n```",
+  selection_suffix = "```\n",
 
   -- prefix/suffix for paths that gets sent to the tmux pane
   path_prefix = "@",

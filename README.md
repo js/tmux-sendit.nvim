@@ -79,6 +79,7 @@ No keybindings are set by default. Bind the functions you need in your config:
     { "<leader>as", function() require("sendit").send_selection() end, mode = "v", desc = "Send selection to tmux pane" },
     { "<leader>af", function() require("sendit").send_rel_path() end, mode = { "n", "v" }, desc = "Send relative file path to tmux pane" },
     { "<leader>aF", function() require("sendit").send_abs_path() end, mode = { "n", "v" }, desc = "Send absolute file path to tmux pane" },
+    { "<leader>ad", function() require("sendit").send_diagnostic() end, mode = { "n", "v" }, desc = "Send diagnostics to tmux pane" },
   },
   opts = {},
 }
@@ -91,6 +92,7 @@ No keybindings are set by default. Bind the functions you need in your config:
 | `:Sendit selection` | visual | send the current visual selection   |
 | `:Sendit path`      | normal | send the project-relative file path |
 | `:Sendit fullpath`  | normal | send the absolute file path         |
+| `:Sendit diagnostic` | normal | send diagnostics to tmux pane       |
 
 ## License
 
