@@ -13,6 +13,9 @@ local defaults = {
   -- prefix/suffix for paths that gets sent to the tmux pane
   path_prefix = "@",
   path_suffix = " ",
+
+  -- format for line range appended to paths in visual mode ({start} and {end} are replaced)
+  path_range_format = "#L{start}-L{end}",
 }
 
 ---@type sendit.Config

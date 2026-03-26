@@ -63,6 +63,9 @@ require("sendit").setup({
   -- prefix/suffix wrapped around file paths sent to the pane
   path_prefix = "@",
   path_suffix = " ",
+
+  -- format for line range appended to paths in visual mode
+  path_range_format = "#L{start}-L{end}",
 })
 ````
 
@@ -90,8 +93,8 @@ No keybindings are set by default. Bind the functions you need in your config:
 | command / key        | mode   | description                         |
 | -------------------- | ------ | ----------------------------------- |
 | `:Sendit selection`  | visual | send the current visual selection   |
-| `:Sendit path`       | normal | send the project-relative file path |
-| `:Sendit fullpath`   | normal | send the absolute file path         |
+| `:Sendit path`       | n / v  | send the project-relative file path (with line range in visual mode) |
+| `:Sendit fullpath`   | n / v  | send the absolute file path (with line range in visual mode)         |
 | `:Sendit diagnostic` | normal | send diagnostics to tmux pane       |
 
 ## License
