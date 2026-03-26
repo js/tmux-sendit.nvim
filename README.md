@@ -56,6 +56,9 @@ require("sendit").setup({
   -- only list panes from the current tmux session in the picker
   only_current_session = true,
 
+  -- focus the destination pane after sending
+  focus_after_send = true,
+
   -- prefix/suffix wrapped around selections sent to the pane
   selection_prefix = "\n```",
   selection_suffix = "```\n",

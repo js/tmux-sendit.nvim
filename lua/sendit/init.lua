@@ -78,6 +78,9 @@ local function send_to_pane(text, pane_id)
         vim.notify("sendit: command failed: " .. (result.stderr or ""), vim.log.levels.ERROR)
       end)
     else
+      if config.config.focus_after_send then
+        vim.system(tmux.focus_command(pane_id))
+      end
       vim.schedule(function()
         vim.notify("Sent to pane '" .. pane_id .. "'")
       end)
