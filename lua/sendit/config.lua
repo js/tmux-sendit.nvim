@@ -2,9 +2,10 @@ local M = {}
 
 ---@class sendit.Config
 ---@field cmd string[] Shell command to run on selected text
+---@field pane_scope "window"|"session"|"all" Scope for listing tmux panes in the picker
 local defaults = {
   cmd = { "tmux", "send-keys", "-t" },
-  only_current_session = true, -- should only panes from the current session be listed in the picker
+  pane_scope = "session", -- "window" (current window), "session" (current session), "all" (all sessions)
 
   -- prefix/suffix for the selection that gets sent to the tmux pane
   selection_prefix = "\n```",

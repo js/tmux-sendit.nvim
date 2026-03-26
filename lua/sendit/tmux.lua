@@ -2,10 +2,21 @@ local M = {}
 
 local config = require("sendit.config")
 
+local scope_flags = {
+  window = "",
+  session = " -s ",
+  all = " -a ",
+}
+
 ---@return string command
 function M.list_command()
-  local param = config.config.only_current_session and " -s " or ""
-  return "tmux list-panes" .. param .. "-F '#{session_name}:#{window_index}.#{pane_index} #{pane_current_command}'"
+  local scope = config.config.pane_scope
+  local flag = scope_flags[scope]
+  if not flag then
+    vim.notify("sendit: invalid pane_scope '" .. tostring(scope) .. "', falling back to 'session'", vim.log.levels.WARN)
+    flag = scope_flags.session
+  end
+  return "tmux list-panes" .. flag .. " -F '#{session_name}:#{window_index}.#{pane_index} #{pane_current_command}'"
 end
 
 ---@param text string
