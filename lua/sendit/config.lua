@@ -6,6 +6,7 @@ local M = {}
 local defaults = {
   cmd = { "tmux", "send-keys", "-t" },
   pane_scope = "session", -- "window" (current window), "session" (current session), "all" (all sessions)
+  focus_after_send = true, -- focus the destination pane after sending
 
   -- prefix/suffix for the selection that gets sent to the tmux pane
   selection_prefix = "\n```",
@@ -14,6 +15,9 @@ local defaults = {
   -- prefix/suffix for paths that gets sent to the tmux pane
   path_prefix = "@",
   path_suffix = " ",
+
+  -- format for line range appended to paths in visual mode ({start} and {end} are replaced)
+  path_range_format = "#L{start}-L{end}",
 }
 
 ---@type sendit.Config

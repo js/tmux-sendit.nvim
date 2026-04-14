@@ -56,6 +56,9 @@ require("sendit").setup({
   -- scope for listing tmux panes: "window", "session", or "all"
   pane_scope = "session",
 
+  -- focus the destination pane after sending
+  focus_after_send = true,
+
   -- prefix/suffix wrapped around selections sent to the pane
   selection_prefix = "\n```",
   selection_suffix = "```\n",
@@ -63,6 +66,9 @@ require("sendit").setup({
   -- prefix/suffix wrapped around file paths sent to the pane
   path_prefix = "@",
   path_suffix = " ",
+
+  -- format for line range appended to paths in visual mode
+  path_range_format = "#L{start}-L{end}",
 })
 ````
 
@@ -90,9 +96,14 @@ No keybindings are set by default. Bind the functions you need in your config:
 | command / key        | mode   | description                         |
 | -------------------- | ------ | ----------------------------------- |
 | `:Sendit selection`  | visual | send the current visual selection   |
-| `:Sendit path`       | normal | send the project-relative file path |
-| `:Sendit fullpath`   | normal | send the absolute file path         |
+| `:Sendit path`       | n / v  | send the project-relative file path (with line range in visual mode) |
+| `:Sendit fullpath`   | n / v  | send the absolute file path (with line range in visual mode)         |
 | `:Sendit diagnostic` | normal | send diagnostics to tmux pane       |
+| `:Sendit reset`      | normal | clear the remembered target pane    |
+
+## Pane Selection
+
+The pane picker automatically filters out the pane running neovim. When only one target pane is available, it sends directly without prompting. After selecting a pane, it's remembered for subsequent sends — use `:Sendit reset` to clear it.
 
 ## License
 

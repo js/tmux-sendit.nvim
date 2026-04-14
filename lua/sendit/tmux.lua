@@ -27,4 +27,10 @@ function M.send_command(text, pane_id)
   return cmd
 end
 
+---@param pane_id string
+---@return string[] command
+function M.focus_command(pane_id)
+  return { "tmux", "select-pane", "-t", pane_id }
+end
+
 return M
