@@ -2,9 +2,11 @@ local M = {}
 
 ---@class sendit.Config
 ---@field cmd string[] Shell command to run on selected text
+---@field focus_after_send boolean Focus the destination tmux pane after sending
 local defaults = {
   cmd = { "tmux", "send-keys", "-t" },
   only_current_session = true, -- should only panes from the current session be listed in the picker
+  focus_after_send = true, -- focus the destination pane after sending
 
   -- prefix/suffix for the selection that gets sent to the tmux pane
   selection_prefix = "\n```",
