@@ -16,7 +16,7 @@ function M.list_command()
     vim.notify("sendit: invalid pane_scope '" .. tostring(scope) .. "', falling back to 'session'", vim.log.levels.WARN)
     flag = scope_flags.session
   end
-  return "tmux list-panes" .. flag .. " -F '#{session_name}:#{window_index}.#{pane_index} #{pane_current_command}'"
+  return "tmux list-panes" .. flag .. " -F '#{pane_id} #{session_name}:#{window_index}.#{pane_index} #{pane_current_command}'"
 end
 
 ---@param text string
