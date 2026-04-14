@@ -150,13 +150,15 @@ function M.send_diagnostic()
     diags = vim.diagnostic.get(0, { lnum = cursor[1] - 1 })
   end
 
+  local rel_path = paths.get_relative_path()
+
   local lines = vim
     .iter(diags)
     :map(function(d)
       local severity = vim.diagnostic.severity[d.severity] or "UNKNOWN"
       local source = d.source or "unknown"
       local msg = (d.message or ""):gsub("\n", "")
-      return severity .. " (" .. source .. "): " .. msg
+      return rel_path .. ":" .. (d.lnum + 1) .. ": " .. severity .. " (" .. source .. "): " .. msg
     end)
     :totable()
 
