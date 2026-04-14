@@ -53,8 +53,8 @@ require("sendit").setup({
   -- shell command used to send text to a tmux pane
   cmd = { "tmux", "send-keys", "-t" },
 
-  -- only list panes from the current tmux session in the picker
-  only_current_session = true,
+  -- scope for listing tmux panes: "window", "session", or "all"
+  pane_scope = "session",
 
   -- focus the destination pane after sending
   focus_after_send = true,
