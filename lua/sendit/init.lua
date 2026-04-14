@@ -170,19 +170,34 @@ function M.send_diagnostic()
   M.send_text(table.concat(lines, "\n"))
 end
 
+---@return string range suffix or empty string
+local function format_line_range()
+  local mode = vim.fn.mode()
+  if not mode:match("[vV]") then
+    return ""
+  end
+  local start_pos = vim.fn.getpos("v")
+  local end_pos = vim.fn.getpos(".")
+  local start_line = math.min(start_pos[2], end_pos[2])
+  local end_line = math.max(start_pos[2], end_pos[2])
+  return config.config.path_range_format:gsub("{start}", start_line):gsub("{end}", end_line)
+end
+
 -- Send the relative path of the current buffer
 function M.send_rel_path()
+  local range = format_line_range()
   local path = paths.get_relative_path()
   select_pane(function(pane_id)
-    send_to_pane(M.config.path_prefix .. path .. M.config.path_suffix, pane_id)
+    send_to_pane(M.config.path_prefix .. path .. range .. M.config.path_suffix, pane_id)
   end)
 end
 
 -- Send the absolute path of the current buffer
 function M.send_abs_path()
+  local range = format_line_range()
   local abs_path = vim.api.nvim_buf_get_name(0)
   select_pane(function(pane_id)
-    send_to_pane(M.config.path_prefix .. abs_path .. M.config.path_suffix, pane_id)
+    send_to_pane(M.config.path_prefix .. abs_path .. range .. M.config.path_suffix, pane_id)
   end)
 end
 
