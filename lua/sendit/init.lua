@@ -16,6 +16,7 @@ function M.setup(opts)
     path = M.send_rel_path,
     fullpath = M.send_abs_path,
     diagnostic = M.send_diagnostic,
+    reset = M.reset_pane,
   }
 
   vim.api.nvim_create_user_command("Sendit", function(args)
@@ -45,16 +46,48 @@ function M.setup(opts)
   })
 end
 
+---@param pane_id string
+---@param on_select fun(pane_id: string)
+local function use_pane(pane_id, on_select)
+  vim.g.sendit_pane = pane_id
+  on_select(pane_id)
+end
+
 ---@param on_select fun(pane_id: string)
 local function select_pane(on_select)
   local all_panes = vim.fn.systemlist(tmux.list_command())
+  local current_pane = vim.env.TMUX_PANE
   local panes = vim
     .iter(all_panes)
     :map(function(pane)
-      local id, rest = pane:match("^(%S+)%s(.+)$")
-      return { id = id, command = rest }
+      local tmux_id, id, rest = pane:match("^(%S+)%s(%S+)%s(.+)$")
+      return { tmux_id = tmux_id, id = id, command = rest }
+    end)
+    :filter(function(pane)
+      return not current_pane or pane.tmux_id ~= current_pane
     end)
     :totable()
+
+  -- Reuse remembered pane if it still exists
+  local remembered = vim.g.sendit_pane
+  if remembered then
+    for _, pane in ipairs(panes) do
+      if pane.id == remembered then
+        return on_select(remembered)
+      end
+    end
+    vim.g.sendit_pane = nil
+  end
+
+  -- Auto-select if only one pane available
+  if #panes == 1 then
+    return use_pane(panes[1].id, on_select)
+  end
+
+  if #panes == 0 then
+    vim.notify("Sendit: no target panes available", vim.log.levels.WARN)
+    return
+  end
 
   vim.ui.select(panes, {
     prompt = "Select target tmux pane:",
@@ -63,7 +96,7 @@ local function select_pane(on_select)
     end,
   }, function(choice)
     if choice then
-      on_select(choice.id)
+      use_pane(choice.id, on_select)
     end
   end)
 end
@@ -162,6 +195,15 @@ function M.send_selection()
   local lines = vim.fn.getregion(start_pos, end_pos, { type = mode })
   local text = M._surround_selection(lines)
   M.send_text(text)
+end
+
+function M.reset_pane()
+  if vim.g.sendit_pane then
+    vim.g.sendit_pane = nil
+    vim.notify("Sendit: pane selection cleared")
+  else
+    vim.notify("Sendit: no pane was set", vim.log.levels.INFO)
+  end
 end
 
 ---@param text string

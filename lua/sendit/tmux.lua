@@ -5,7 +5,7 @@ local config = require("sendit.config")
 ---@return string command
 function M.list_command()
   local param = config.config.only_current_session and " -s " or ""
-  return "tmux list-panes" .. param .. "-F '#{session_name}:#{window_index}.#{pane_index} #{pane_current_command}'"
+  return "tmux list-panes" .. param .. "-F '#{pane_id} #{session_name}:#{window_index}.#{pane_index} #{pane_current_command}'"
 end
 
 ---@param text string
