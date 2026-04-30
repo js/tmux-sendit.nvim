@@ -49,7 +49,9 @@ end
 ---@param pane_id string
 ---@param on_select fun(pane_id: string)
 local function use_pane(pane_id, on_select)
-  vim.g.sendit_pane = pane_id
+  if config.config.remember_last then
+    vim.g.sendit_pane = pane_id
+  end
   on_select(pane_id)
 end
 
@@ -73,7 +75,7 @@ local function select_pane(on_select)
       :totable()
   end
 
-  -- Reuse remembered pane if it still exists
+  -- Reuse remembered pane if it still exists and config says so
   local remembered = vim.g.sendit_pane
   if remembered then
     for _, pane in ipairs(panes) do

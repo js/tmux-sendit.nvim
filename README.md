@@ -59,6 +59,9 @@ require("sendit").setup({
   -- focus the destination pane after sending
   focus_after_send = true,
 
+  -- remember and reuse last used pane, will always send to this pane until `:Sendit reset`
+  remember_last = true,
+
   -- prefix/suffix wrapped around selections sent to the pane
   selection_prefix = "\n```",
   selection_suffix = "```\n",

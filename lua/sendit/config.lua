@@ -8,6 +8,8 @@ local defaults = {
   cmd = { "tmux", "send-keys", "-t" },
   pane_scope = "session", -- "window" (current window), "session" (current session), "all" (all sessions)
   focus_after_send = true, -- focus the destination pane after sending
+  -- remember and reuse last used pane, will always send to this pane until `:Sendit reset`
+  remember_last = true,
 
   -- prefix/suffix for the selection that gets sent to the tmux pane
   selection_prefix = "\n```",
