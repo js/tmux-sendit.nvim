@@ -97,8 +97,8 @@ local function select_pane(on_select)
   vim.ui.select(panes, {
     prompt = "Select target tmux pane:",
     format_item = function(pane)
-      local label = pane.agent and (" [" .. pane.agent .. "] ") or " "
-      return pane.id .. label .. pane.command
+      local label = pane.agent and (" [" .. pane.agent .. "] ") or ""
+      return label .. pane.id .. "(" .. pane.command .. ")"
     end,
   }, function(choice)
     if choice then

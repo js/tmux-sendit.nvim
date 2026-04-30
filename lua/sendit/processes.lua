@@ -12,13 +12,20 @@ local scope_flags = {
 ---@field patterns string[] Lua patterns matched against full argv of a process on the panes tty
 ---@field exclude? string[] Lua patterns; if any matches then the candidate is rejected
 
+---@class sendit.Pane
+---@field tmux_id string tmux's internal pane id (e.g. "%53")
+---@field id string human-readable session:window.pane id (e.g. "_config:3.3")
+---@field command string the pane's foreground command (#{pane_current_command})
+---@field pane_tty string absolute tty path (e.g. "/dev/ttys052")
+---@field agent string registry name of the matched coding-agent process (set by M.filter)
+
 ---@type table<string, sendit.ProcessID>
 local registry = {
   claude = { patterns = { "claude" } },
   codex = { patterns = { "codex" } },
   opencode = { patterns = { "opencode" } },
   gemini = { patterns = { "gemini" } },
-  copilot = { patterns = { "copilot" }, exlude = { "language%-server" } },
+  copilot = { patterns = { "copilot" }, exclude = { "language%-server" } },
   pi = { patterns = { "[/%s]pi$", "[/%s]pi%s" } },
 }
 
@@ -73,7 +80,7 @@ end
 ---Filter tmux panes to those whose ttys hosts a process matching one of `names`
 ---in the built-in registry
 ---@param names string[]
----@return { tmux_id: string, id: string, command: string, pane_tty: string, agent: string }[]
+---@return sendit.Pane[]
 function M.filter(names)
   local idents = {}
   for _, name in ipairs(names) do
@@ -91,12 +98,20 @@ function M.filter(names)
 
   local current_pane = vim.env.TMUX_PANE
   local raw = vim.fn.systemlist(list_panes_command())
+  ---@type sendit.Pane[]
   local panes = {}
   for _, line in ipairs(raw) do
+    -- line looks like:
     -- %53 _config:3.3 /dev/ttys052 2.1.123
     local tmux_id, id, tty, cmd = line:match("^(%S+)%s(%S+)%s(%S+)%s(.+)$")
     if tmux_id and (not current_pane or tmux_id ~= current_pane) then
-      table.insert(panes, { tmux_id = tmux_id, id = id, pane_tty = tty, command = cmd })
+      table.insert(panes, {
+        tmux_id = tmux_id,
+        id = id,
+        command = cmd,
+        pane_tty = tty,
+        agent = cmd, -- will be resolved next
+      })
     end
   end
   if #panes == 0 then
@@ -104,13 +119,16 @@ function M.filter(names)
   end
 
   local cmds = cmds_by_tty()
+  ---@type sendit.Pane[]
   local matching_panes = {}
   for _, pane in ipairs(panes) do
     local tty_key = pane.pane_tty:gsub("^/dev/", "")
     local pane_cmds = cmds[tty_key] or {}
     for _, entry in ipairs(idents) do
       if ident_matches(pane_cmds, entry.ident) then
+        pane.agent = entry.name
         table.insert(matching_panes, pane)
+        break
       end
     end
   end
