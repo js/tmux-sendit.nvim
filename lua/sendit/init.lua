@@ -55,18 +55,23 @@ end
 
 ---@param on_select fun(pane_id: string)
 local function select_pane(on_select)
-  local all_panes = vim.fn.systemlist(tmux.list_command())
-  local current_pane = vim.env.TMUX_PANE
-  local panes = vim
-    .iter(all_panes)
-    :map(function(pane)
-      local tmux_id, id, rest = pane:match("^(%S+)%s(%S+)%s(.+)$")
-      return { tmux_id = tmux_id, id = id, command = rest }
-    end)
-    :filter(function(pane)
-      return not current_pane or pane.tmux_id ~= current_pane
-    end)
-    :totable()
+  local panes
+  if type(config.config.process_filter) == "function" then
+    panes = config.config.process_filter() or {}
+  else
+    local all_panes = vim.fn.systemlist(tmux.list_command())
+    local current_pane = vim.env.TMUX_PANE
+    panes = vim
+      .iter(all_panes)
+      :map(function(pane)
+        local tmux_id, id, rest = pane:match("^(%S+)%s(%S+)%s(.+)$")
+        return { tmux_id = tmux_id, id = id, command = rest }
+      end)
+      :filter(function(pane)
+        return not current_pane or pane.tmux_id ~= current_pane
+      end)
+      :totable()
+  end
 
   -- Reuse remembered pane if it still exists
   local remembered = vim.g.sendit_pane
@@ -92,7 +97,8 @@ local function select_pane(on_select)
   vim.ui.select(panes, {
     prompt = "Select target tmux pane:",
     format_item = function(pane)
-      return pane.id .. " " .. pane.command
+      local label = pane.agent and (" [" .. pane.agent .. "] ") or " "
+      return pane.id .. label .. pane.command
     end,
   }, function(choice)
     if choice then

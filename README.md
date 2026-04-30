@@ -69,8 +69,43 @@ require("sendit").setup({
 
   -- format for line range appended to paths in visual mode
   path_range_format = "#L{start}-L{end}",
+
+  -- function returning the pane list for the picker, or nil to show every pane in scope.
+  -- The default restricts the picker to panes running known coding-agent processes
+  -- (claude, codex, opencode, gemini, copilot, pi).
+  process_filter = function()
+    return require("sendit.processes").filter({
+      "claude", "codex", "opencode", "gemini", "copilot", "pi",
+    })
+  end,
 })
 ````
+
+### Filtering the pane picker
+
+By default the picker only lists tmux panes whose process tree contains a known
+coding-agent CLI. The list is matched against a small built-in registry that
+walks each pane's process descendants (so node/python-wrapped CLIs like
+`claude` or `codex` are detected even when the foreground process reports as
+`node`). Built-in names: `claude`, `codex`, `opencode`, `gemini`, `copilot`
+(excluding `copilot-language-server`), and `pi`.
+
+To narrow or extend the set, pass a different name list:
+
+```lua
+process_filter = function()
+  return require("sendit.sessions").filter({ "claude", "codex" })
+end,
+```
+
+To disable filtering entirely and show every pane in scope:
+
+```lua
+process_filter = nil,
+```
+
+For fully custom logic, supply your own function returning a list of pane
+tables (`{ tmux_id, id, command, agent? }`).
 
 ## Commands & Keybindings
 
@@ -93,13 +128,13 @@ No keybindings are set by default. Bind the functions you need in your config:
 
 #### Commands
 
-| command / key        | mode   | description                         |
-| -------------------- | ------ | ----------------------------------- |
-| `:Sendit selection`  | visual | send the current visual selection   |
+| command / key        | mode   | description                                                          |
+| -------------------- | ------ | -------------------------------------------------------------------- |
+| `:Sendit selection`  | visual | send the current visual selection                                    |
 | `:Sendit path`       | n / v  | send the project-relative file path (with line range in visual mode) |
 | `:Sendit fullpath`   | n / v  | send the absolute file path (with line range in visual mode)         |
-| `:Sendit diagnostic` | normal | send diagnostics to tmux pane       |
-| `:Sendit reset`      | normal | clear the remembered target pane    |
+| `:Sendit diagnostic` | normal | send diagnostics to tmux pane                                        |
+| `:Sendit reset`      | normal | clear the remembered target pane                                     |
 
 ## Pane Selection
 
