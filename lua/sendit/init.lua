@@ -55,8 +55,14 @@ local function use_pane(pane_id, on_select)
   on_select(pane_id)
 end
 
+---@class sendit.PaneDescription
+---@field tmux_id string
+---@field id string
+---@field command_name string
+
 ---@param on_select fun(pane_id: string)
 local function select_pane(on_select)
+  ---@type sendit.PaneDescription[]
   local panes
   if type(config.config.process_filter) == "function" then
     panes = config.config.process_filter() or {}
@@ -67,7 +73,7 @@ local function select_pane(on_select)
       .iter(all_panes)
       :map(function(pane)
         local tmux_id, id, rest = pane:match("^(%S+)%s(%S+)%s(.+)$")
-        return { tmux_id = tmux_id, id = id, command = rest }
+        return { tmux_id = tmux_id, id = id, command_name = rest }
       end)
       :filter(function(pane)
         return not current_pane or pane.tmux_id ~= current_pane
@@ -96,11 +102,24 @@ local function select_pane(on_select)
     return
   end
 
+  local widths = { command_name = 0, id = 0 }
+  for _, p in ipairs(panes) do
+    widths.command_name = math.max(widths.command_name, #p.agent)
+    widths.id = math.max(widths.id, #p.id)
+  end
+
+  local function pad(str, width)
+    return str .. string.rep(" ", width - #str)
+  end
+
   vim.ui.select(panes, {
     prompt = "Select target tmux pane:",
     format_item = function(pane)
-      local label = pane.agent and (" [" .. pane.agent .. "] ") or ""
-      return label .. pane.id .. "(" .. pane.command .. ")"
+      vim.print(widths)
+      return table.concat({
+        pad(pane.agent and pane.agent or pane.command, widths.command_name),
+        pad(pane.id, widths.id),
+      }, " ")
     end,
   }, function(choice)
     if choice then
