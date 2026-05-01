@@ -1,7 +1,10 @@
 local M = {}
 
+---@type sendit.PathsModule
 local paths = require("sendit.paths")
+---@type sendit.TmuxModule
 local tmux = require("sendit.tmux")
+---@type sendit.ConfigModule
 local config = require("sendit.config")
 
 M.config = config.config
@@ -68,11 +71,17 @@ local function select_pane(on_select)
     panes = config.config.process_filter() or {}
   else
     local all_panes = vim.fn.systemlist(tmux.list_command())
+    ---@type string?
     local current_pane = vim.env.TMUX_PANE
     panes = vim
       .iter(all_panes)
       :map(function(pane)
+        ---@type string?, string?, string?
         local tmux_id, id, rest = pane:match("^(%S+)%s(%S+)%s(.+)$")
+        if not (tmux_id and id and rest) then
+          return nil
+        end
+        ---@type sendit.PaneDescription
         return { tmux_id = tmux_id, id = id, command_name = rest }
       end)
       :filter(function(pane)
@@ -114,6 +123,7 @@ local function select_pane(on_select)
 
   vim.ui.select(panes, {
     prompt = "Select target tmux pane:",
+    ---@param pane sendit.Pane
     format_item = function(pane)
       vim.print(widths)
       return table.concat({
@@ -162,6 +172,7 @@ end
 -- Send the diagnostics at the current cursor in the current selection
 function M.send_diagnostic()
   local mode = vim.fn.mode()
+  ---@type vim.Diagnostic[]
   local diags
 
   if mode:match("[vV]") then
@@ -172,9 +183,13 @@ function M.send_diagnostic()
     local end_line = math.max(start_pos[2], end_pos[2]) - 1
     local all_diags = vim.diagnostic.get(0)
 
-    diags = vim.tbl_filter(function(d)
-      return d.lnum <= end_line and (d.end_lnum or d.lnum) >= start_line
-    end, all_diags)
+    diags = vim.tbl_filter(
+      ---@param d vim.Diagnostic
+      function(d)
+        return d.lnum <= end_line and (d.end_lnum or d.lnum) >= start_line
+      end,
+      all_diags
+    ) --[[@as vim.Diagnostic[] ]]
   else
     local cursor = vim.api.nvim_win_get_cursor(0)
     diags = vim.diagnostic.get(0, { lnum = cursor[1] - 1 })
@@ -210,7 +225,8 @@ local function format_line_range()
   local end_pos = vim.fn.getpos(".")
   local start_line = math.min(start_pos[2], end_pos[2])
   local end_line = math.max(start_pos[2], end_pos[2])
-  return config.config.path_range_format:gsub("{start}", start_line):gsub("{end}", end_line)
+  local range = config.config.path_range_format:gsub("{start}", start_line):gsub("{end}", end_line)
+  return range
 end
 
 -- Send the relative path of the current buffer

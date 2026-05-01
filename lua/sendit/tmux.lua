@@ -1,5 +1,10 @@
+---@class sendit.TmuxModule
+---@field list_command fun(): string
+---@field send_command fun(text: string, pane_id: string): string[]
+---@field focus_command fun(pane_id: string): string[]
 local M = {}
 
+---@type sendit.ConfigModule
 local config = require("sendit.config")
 
 local scope_flags = {

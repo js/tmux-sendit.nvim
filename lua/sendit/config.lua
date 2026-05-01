@@ -1,9 +1,19 @@
+---@class sendit.ConfigModule
+---@field config sendit.Config
+---@field setup fun(opts?: sendit.Config)
 local M = {}
 
 ---@class sendit.Config
 ---@field cmd string[] Shell command to run on selected text
 ---@field pane_scope "window"|"session"|"all" Scope for listing tmux panes in the picker
----@field process_filter? fun(): table[] Returns the pane list for the picker; nil disables filtering
+---@field focus_after_send boolean Focus the destination pane after sending
+---@field remember_last boolean Remember and reuse last used pane until `:Sendit reset`
+---@field selection_prefix string Prefix for the selection sent to the tmux pane
+---@field selection_suffix string Suffix for the selection sent to the tmux pane
+---@field path_prefix string Prefix for paths sent to the tmux pane
+---@field path_suffix string Suffix for paths sent to the tmux pane
+---@field path_range_format string Format for line range appended to paths in visual mode ({start} and {end} are replaced)
+---@field process_filter? fun(): sendit.Pane[] Returns the pane list for the picker; nil disables filtering
 local defaults = {
   cmd = { "tmux", "send-keys", "-t" },
   pane_scope = "session", -- "window" (current window), "session" (current session), "all" (all sessions)

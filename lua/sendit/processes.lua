@@ -1,5 +1,6 @@
 local M = {}
 
+---@type sendit.ConfigModule
 local config = require("sendit.config")
 
 local scope_flags = {
@@ -41,6 +42,7 @@ end
 ---Group process command line by tty (tty without the /dev/ prefix)
 ---@return table<string, string[]>
 local function cmds_by_tty()
+  ---@type table<string, string[]>
   local out = {}
   for _, line in ipairs(vim.fn.systemlist("ps -axo tty=,command=")) do
     local tty, cmd = line:match("^(%S+)%s+(.+)$")
@@ -82,6 +84,7 @@ end
 ---@param names string[]
 ---@return sendit.Pane[]
 function M.filter(names)
+  ---@type { name: string, ident: sendit.ProcessID }[]
   local idents = {}
   for _, name in ipairs(names) do
     local ident = registry[name]
@@ -96,6 +99,7 @@ function M.filter(names)
     return {}
   end
 
+  ---@type string?
   local current_pane = vim.env.TMUX_PANE
   local raw = vim.fn.systemlist(list_panes_command())
   ---@type sendit.Pane[]

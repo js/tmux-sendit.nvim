@@ -10,6 +10,14 @@
     "checkThirdParty": false
   },
   "diagnostics": {
-    "globals": ["vim"]
+    "globals": [
+      "vim"
+    ],
+    "severity": {
+      "undefined-field": "Warning"
+    },
+    "neededFileStatus": {
+      "undefined-field": "Any"
+    }
   }
 }

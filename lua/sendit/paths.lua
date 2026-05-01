@@ -1,5 +1,7 @@
+---@class sendit.PathsModule
 local M = {}
 
+---@return string
 local function _get_root()
   -- try LSP root first
   local clients = vim.lsp.get_clients({ bufnr = 0 })
@@ -25,6 +27,7 @@ local function _get_root()
   return vim.fn.getcwd()
 end
 
+---@return string
 function M.get_relative_path()
   local abs_path = vim.api.nvim_buf_get_name(0)
   local root = _get_root()
