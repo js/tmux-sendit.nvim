@@ -6,6 +6,9 @@ local paths = require("sendit.paths")
 local tmux = require("sendit.tmux")
 ---@type sendit.ConfigModule
 local config = require("sendit.config")
+local prompt = require("sendit.prompt")
+---@type sendit.DiagnosticsModule
+local diagnostics = require("sendit.diagnostics")
 
 M.config = config.config
 
@@ -20,6 +23,7 @@ function M.setup(opts)
     fullpath = M.send_abs_path,
     diagnostic = M.send_diagnostic,
     reset = M.reset_pane,
+    prompt = prompt.select_prompt,
   }
 
   vim.api.nvim_create_user_command("Sendit", function(args)
@@ -47,115 +51,6 @@ function M.setup(opts)
     desc = "Sendit commands",
     range = true,
   })
-end
-
----@param pane_id string
----@param on_select fun(pane_id: string)
-local function use_pane(pane_id, on_select)
-  if config.config.remember_last then
-    vim.g.sendit_pane = pane_id
-  end
-  on_select(pane_id)
-end
-
----@class sendit.PaneDescription
----@field tmux_id string
----@field id string
----@field command_name string
-
----@param on_select fun(pane_id: string)
-local function select_pane(on_select)
-  ---@type sendit.PaneDescription[]
-  local panes
-  if type(config.config.process_filter) == "function" then
-    panes = config.config.process_filter() or {}
-  else
-    local all_panes = vim.fn.systemlist(tmux.list_command())
-    ---@type string?
-    local current_pane = vim.env.TMUX_PANE
-    panes = vim
-      .iter(all_panes)
-      :map(function(pane)
-        ---@type string?, string?, string?
-        local tmux_id, id, rest = pane:match("^(%S+)%s(%S+)%s(.+)$")
-        if not (tmux_id and id and rest) then
-          return nil
-        end
-        ---@type sendit.PaneDescription
-        return { tmux_id = tmux_id, id = id, command_name = rest }
-      end)
-      :filter(function(pane)
-        return not current_pane or pane.tmux_id ~= current_pane
-      end)
-      :totable()
-  end
-
-  -- Reuse remembered pane if it still exists and config says so
-  local remembered = vim.g.sendit_pane
-  if remembered then
-    for _, pane in ipairs(panes) do
-      if pane.id == remembered then
-        return on_select(remembered)
-      end
-    end
-    vim.g.sendit_pane = nil
-  end
-
-  -- Auto-select if only one pane available
-  if #panes == 1 then
-    return use_pane(panes[1].id, on_select)
-  end
-
-  if #panes == 0 then
-    vim.notify("Sendit: no target panes available", vim.log.levels.WARN)
-    return
-  end
-
-  local widths = { command_name = 0, id = 0 }
-  for _, p in ipairs(panes) do
-    widths.command_name = math.max(widths.command_name, #p.agent)
-    widths.id = math.max(widths.id, #p.id)
-  end
-
-  local function pad(str, width)
-    return str .. string.rep(" ", width - #str)
-  end
-
-  vim.ui.select(panes, {
-    prompt = "Select target tmux pane:",
-    ---@param pane sendit.Pane
-    format_item = function(pane)
-      vim.print(widths)
-      return table.concat({
-        pad(pane.agent and pane.agent or pane.command, widths.command_name),
-        pad(pane.id, widths.id),
-      }, " ")
-    end,
-  }, function(choice)
-    if choice then
-      use_pane(choice.id, on_select)
-    end
-  end)
-end
-
----@param text string
----@param pane_id string
-local function send_to_pane(text, pane_id)
-  local cmd = tmux.send_command(text, pane_id)
-  vim.system(cmd, {}, function(result)
-    if result.code ~= 0 then
-      vim.schedule(function()
-        vim.notify("sendit: command failed: " .. (result.stderr or ""), vim.log.levels.ERROR)
-      end)
-    else
-      if config.config.focus_after_send then
-        vim.system(tmux.focus_command(pane_id))
-      end
-      vim.schedule(function()
-        vim.notify("Sent to pane '" .. pane_id .. "'")
-      end)
-    end
-  end)
 end
 
 --- @param selection string[] the selection
@@ -200,10 +95,7 @@ function M.send_diagnostic()
   local lines = vim
     .iter(diags)
     :map(function(d)
-      local severity = vim.diagnostic.severity[d.severity] or "UNKNOWN"
-      local source = d.source or "unknown"
-      local msg = (d.message or ""):gsub("\n", "")
-      return rel_path .. ":" .. (d.lnum + 1) .. ": " .. severity .. " (" .. source .. "): " .. msg
+      return diagnostics.format(d, rel_path)
     end)
     :totable()
 
@@ -233,8 +125,8 @@ end
 function M.send_rel_path()
   local range = format_line_range()
   local path = paths.get_relative_path()
-  select_pane(function(pane_id)
-    send_to_pane(M.config.path_prefix .. path .. range .. M.config.path_suffix, pane_id)
+  tmux.select_pane(function(pane_id)
+    tmux.send_to_pane(M.config.path_prefix .. path .. range .. M.config.path_suffix, pane_id)
   end)
 end
 
@@ -242,8 +134,8 @@ end
 function M.send_abs_path()
   local range = format_line_range()
   local abs_path = vim.api.nvim_buf_get_name(0)
-  select_pane(function(pane_id)
-    send_to_pane(M.config.path_prefix .. abs_path .. range .. M.config.path_suffix, pane_id)
+  tmux.select_pane(function(pane_id)
+    tmux.send_to_pane(M.config.path_prefix .. abs_path .. range .. M.config.path_suffix, pane_id)
   end)
 end
 
@@ -269,8 +161,8 @@ end
 
 ---@param text string
 function M.send_text(text)
-  select_pane(function(pane_id)
-    send_to_pane(text, pane_id)
+  tmux.select_pane(function(pane_id)
+    tmux.send_to_pane(text, pane_id)
   end)
 end
 
