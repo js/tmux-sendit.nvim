@@ -4,9 +4,9 @@ Send selected buffer contents, file paths, or diagnostics to another tmux pane w
 
 Select code, a file path, or diagnostics, pick a target pane, and the content is inserted as if you typed it. Useful for feeding code snippets, file references, diagnostics, or context to a CLI tool running in another pane - like sending selections to a claude code session without constantly switching between tmux panes.
 
-<img width="1670" height="899" alt="image" src="https://github.com/user-attachments/assets/5976a263-0b48-4a6e-9c36-784fb8080cad" />
-
-<img width="1670" height="899" alt="image" src="https://github.com/user-attachments/assets/b0d932c9-7167-499c-a4f5-6010458181fd" />
+<img width="1653" height="1092" alt="Prompt selection" src="https://github.com/user-attachments/assets/73d088e2-6342-4c77-bcd7-100617e05a4a" />
+<img width="1653" height="1092" alt="Target pane and agent selection" src="https://github.com/user-attachments/assets/9bd024ee-8640-40f9-a7ab-201b0a98bc7f" />
+<img width="1670" height="899" alt="Context inserted" src="https://github.com/user-attachments/assets/b0d932c9-7167-499c-a4f5-6010458181fd" />
 
 ## Requirements
 
@@ -53,7 +53,7 @@ require("sendit").setup({
   -- shell command used to send text to a tmux pane
   cmd = { "tmux", "send-keys", "-t" },
 
-  -- scope for listing tmux panes: "window", "session", or "all"
+  -- scope for listing tmux panes: "window" (current window) | "session" (current session) | "all" (all sessions)
   pane_scope = "session",
 
   -- focus the destination pane after sending
@@ -124,6 +124,7 @@ No keybindings are set by default. Bind the functions you need in your config:
     { "<leader>af", function() require("sendit").send_rel_path() end, mode = { "n", "v" }, desc = "Send relative file path to tmux pane" },
     { "<leader>aF", function() require("sendit").send_abs_path() end, mode = { "n", "v" }, desc = "Send absolute file path to tmux pane" },
     { "<leader>ad", function() require("sendit").send_diagnostic() end, mode = { "n", "v" }, desc = "Send diagnostics to tmux pane" },
+    { "<leader>ap", function() require("sendit.prompt").select_prompt() end, mode = { "n", "v" }, desc = "Select Prompt Template…" },
   },
   opts = {},
 }
@@ -137,6 +138,7 @@ No keybindings are set by default. Bind the functions you need in your config:
 | `:Sendit path`       | n / v  | send the project-relative file path (with line range in visual mode) |
 | `:Sendit fullpath`   | n / v  | send the absolute file path (with line range in visual mode)         |
 | `:Sendit diagnostic` | normal | send diagnostics to tmux pane                                        |
+| `:Sendit prompt`     | n / v  | select among prompt templates                                        |
 | `:Sendit reset`      | normal | clear the remembered target pane                                     |
 
 ## Pane Selection
