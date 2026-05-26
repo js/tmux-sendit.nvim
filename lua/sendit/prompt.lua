@@ -11,13 +11,15 @@ local diagnostics = require("sendit.diagnostics")
 local prompts = {
   -- Replacements: {file} {line} {diagnostic} {selection}
   -- TODO: treesitter {function} ?
-  "Look at the uncomitted changes for any obvious bugs, mistakes or things that could otherwise be improved",
+  "Look at the uncomitted changes for any obvious bugs, mistakes or things that could be improved or simplified",
   "Add documentation to this function {file}:{line}",
   "Fix this issue: {diagnostic}",
   "Review {file} for any issues or if it could be improved or simplified",
   "Explain this: {selection}",
   "Document this function {file}:{line}",
   "Write a short comment about what's going on here {file}:{line}",
+  "{diagnostic}",
+  "in {file}:{line} ",
 }
 
 ---@class sendit.PromptContext
