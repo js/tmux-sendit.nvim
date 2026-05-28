@@ -86,18 +86,18 @@ require("sendit").setup({
 
 ### Filtering the pane picker
 
-By default the picker only lists tmux panes whose process tree contains a known
-coding-agent CLI. The list is matched against a small built-in registry that
-walks each pane's process descendants (so node/python-wrapped CLIs like
-`claude` or `codex` are detected even when the foreground process reports as
-`node`). Built-in names: `claude`, `codex`, `opencode`, `gemini`, `copilot`
-(excluding `copilot-language-server`), and `pi`.
+By default the picker only lists tmux panes that have a known coding-agent
+CLI running on their tty. Each pane's `#{pane_tty}` is matched against
+`ps -axo tty=,command=` output, so node/python-wrapped CLIs like `claude` or
+`codex` are detected even when the foreground process reports as `node`.
+Built-in names: `claude`, `codex`, `opencode`, `gemini`, `copilot` (excluding
+`copilot-language-server`), and `pi`.
 
 To narrow or extend the set, pass a different name list:
 
 ```lua
 process_filter = function()
-  return require("sendit.sessions").filter({ "claude", "codex" })
+  return require("sendit.processes").filter({ "claude", "codex" })
 end,
 ```
 
@@ -108,7 +108,9 @@ process_filter = nil,
 ```
 
 For fully custom logic, supply your own function returning a list of pane
-tables (`{ tmux_id, id, command, agent? }`).
+tables shaped like `sendit.Pane`: `{ tmux_id, id, command, pane_tty, agent }`.
+At minimum `id` (used for `tmux send-keys -t`) and a label field (`agent` or
+`command`) are required by the picker.
 
 ## Commands & Keybindings
 
@@ -140,6 +142,24 @@ No keybindings are set by default. Bind the functions you need in your config:
 | `:Sendit diagnostic` | normal | send diagnostics to tmux pane                                        |
 | `:Sendit prompt`     | n / v  | select among prompt templates                                        |
 | `:Sendit reset`      | normal | clear the remembered target pane                                     |
+
+## Prompt Templates
+
+`:Sendit prompt` (or `require("sendit.prompt").select_prompt()`) opens a
+`vim.ui.select` picker over a small built-in list of prompt templates aimed at
+coding agents. The chosen template is expanded against the current buffer
+context and sent to the target pane.
+
+Supported placeholders:
+
+| placeholder    | replaced with                                                                   |
+| -------------- | ------------------------------------------------------------------------------- |
+| `{file}`       | project-relative path of the current buffer                                     |
+| `{line}`       | current cursor line (1-based)                                                   |
+| `{selection}`  | visual selection text (empty in normal mode)                                    |
+| `{diagnostic}` | diagnostics on the current line (or empty if none)                              |
+
+The template list itself is not yet user-configurable.
 
 ## Pane Selection
 
