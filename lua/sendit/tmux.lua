@@ -52,14 +52,9 @@ function M.use_pane(pane_id, on_select)
   on_select(pane_id)
 end
 
----@class sendit.PaneDescription
----@field tmux_id string
----@field id string
----@field command_name string
-
 ---@param on_select fun(pane_id: string)
 function M.select_pane(on_select)
-  ---@type sendit.PaneDescription[]
+  ---@type sendit.Pane[]
   local panes
   if type(config.config.process_filter) == "function" then
     panes = config.config.process_filter() or {}
@@ -75,8 +70,8 @@ function M.select_pane(on_select)
         if not (tmux_id and id and rest) then
           return nil
         end
-        ---@type sendit.PaneDescription
-        return { tmux_id = tmux_id, id = id, command_name = rest }
+        ---@type sendit.Pane
+        return { tmux_id = tmux_id, id = id, command = rest }
       end)
       :filter(function(pane)
         return not current_pane or pane.tmux_id ~= current_pane
@@ -107,7 +102,7 @@ function M.select_pane(on_select)
 
   local widths = { command_name = 0, id = 0 }
   for _, p in ipairs(panes) do
-    widths.command_name = math.max(widths.command_name, #p.agent)
+    widths.command_name = math.max(widths.command_name, #(p.agent or p.command))
     widths.id = math.max(widths.id, #p.id)
   end
 
