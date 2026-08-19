@@ -27,7 +27,7 @@ local registry = {
   opencode = { patterns = { "opencode" } },
   gemini = { patterns = { "gemini" } },
   copilot = { patterns = { "copilot" }, exclude = { "language%-server" } },
-  pi = { patterns = { "[/%s]pi$", "[/%s]pi%s" } },
+  pi = { patterns = { "[/%s]pi$", "[/%s]pi%s", "pi " } },
 }
 
 ---@return string command
