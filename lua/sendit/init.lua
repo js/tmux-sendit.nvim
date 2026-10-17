@@ -2,8 +2,7 @@ local M = {}
 
 ---@type sendit.PathsModule
 local paths = require("sendit.paths")
----@type sendit.TmuxModule
-local tmux = require("sendit.tmux")
+local targets = require("sendit.targets")
 ---@type sendit.ConfigModule
 local config = require("sendit.config")
 local prompt = require("sendit.prompt")
@@ -125,18 +124,14 @@ end
 function M.send_rel_path()
   local range = format_line_range()
   local path = paths.get_relative_path()
-  tmux.select_pane(function(pane_id)
-    tmux.send_to_pane(M.config.path_prefix .. path .. range .. M.config.path_suffix, pane_id)
-  end)
+  targets.send(M.config.path_prefix .. path .. range .. M.config.path_suffix)
 end
 
 -- Send the absolute path of the current buffer
 function M.send_abs_path()
   local range = format_line_range()
   local abs_path = vim.api.nvim_buf_get_name(0)
-  tmux.select_pane(function(pane_id)
-    tmux.send_to_pane(M.config.path_prefix .. abs_path .. range .. M.config.path_suffix, pane_id)
-  end)
+  targets.send(M.config.path_prefix .. abs_path .. range .. M.config.path_suffix)
 end
 
 -- Send the current selection
@@ -151,19 +146,12 @@ function M.send_selection()
 end
 
 function M.reset_pane()
-  if vim.g.sendit_pane then
-    vim.g.sendit_pane = nil
-    vim.notify("Sendit: pane selection cleared")
-  else
-    vim.notify("Sendit: no pane was set", vim.log.levels.INFO)
-  end
+  targets.reset()
 end
 
 ---@param text string
 function M.send_text(text)
-  tmux.select_pane(function(pane_id)
-    tmux.send_to_pane(text, pane_id)
-  end)
+  targets.send(text)
 end
 
 return M

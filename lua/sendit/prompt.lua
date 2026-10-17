@@ -1,7 +1,6 @@
 local M = {}
 
----@type sendit.TmuxModule
-local tmux = require("sendit.tmux")
+local targets = require("sendit.targets")
 ---@type sendit.PathsModule
 local paths = require("sendit.paths")
 ---@type sendit.DiagnosticsModule
@@ -63,21 +62,13 @@ end
 ---@param ctx sendit.PromptContext
 ---@return string
 local function substitute(template, ctx)
-  local out = template
-    :gsub("{file}", ctx.file)
-    :gsub("{line}", tostring(ctx.line))
-    :gsub("{selection}", ctx.selection)
-    :gsub("{diagnostic}", ctx.diagnostic)
-  return out
+  return (template:gsub("{(%w+)}", ctx))
 end
 
 ---@param template string
 ---@param ctx sendit.PromptContext
 local function prompt_selected(template, ctx)
-  local text = substitute(template, ctx)
-  tmux.select_pane(function(pane_id)
-    tmux.send_to_pane(text, pane_id)
-  end)
+  targets.send(substitute(template, ctx))
 end
 
 function M.select_prompt()

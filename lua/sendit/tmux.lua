@@ -1,149 +1,84 @@
----@class sendit.TmuxModule
----@field list_command fun(): string
----@field send_command fun(text: string, pane_id: string): string[]
----@field focus_command fun(pane_id: string): string[]
----@field use_pane fun(pane_id: string, on_select: fun(pane_id: string))
----@field select_pane fun(on_select: fun(pane_id: string))
----@field send_to_pane fun(text: string, pane_id: string)
-local M = {}
-
----@type sendit.ConfigModule
 local config = require("sendit.config")
+local run = require("sendit.targets").run
+
+---@class sendit.Pane
+---@field tmux_id? string tmux's internal pane id (e.g. "%53")
+---@field id string human-readable session:window.pane id (e.g. "_config:3.3")
+---@field command? string the pane's foreground command (#{pane_current_command})
+---@field pane_tty? string absolute tty path (e.g. "/dev/ttys052")
+---@field agent? string registry name of the matched coding-agent process
+
+---@type sendit.Backend
+local M = { name = "tmux", env = { "TMUX" } }
 
 local scope_flags = {
-  window = "",
-  session = " -s ",
-  all = " -a ",
+  window = {},
+  session = { "-s" },
+  all = { "-a" },
 }
 
----@return string command
-function M.list_command()
-  local scope = config.config.pane_scope
-  local flag = scope_flags[scope]
-  if not flag then
-    vim.notify("sendit: invalid pane_scope '" .. tostring(scope) .. "', falling back to 'session'", vim.log.levels.WARN)
-    flag = scope_flags.session
+function M.list(scope)
+  local argv = vim.list_extend({ "tmux", "list-panes" }, scope_flags[scope])
+  if scope ~= "all" and vim.env.TMUX_PANE then
+    vim.list_extend(argv, { "-t", vim.env.TMUX_PANE })
   end
-  return "tmux list-panes"
-    .. flag
-    .. " -F '#{pane_id} #{session_name}:#{window_index}.#{pane_index} #{pane_current_command}'"
-end
-
----@param text string
----@param pane_id string
----@return string[] command
-function M.send_command(text, pane_id)
-  local cmd = vim.list_extend(vim.list_slice(config.config.cmd), { pane_id, text })
-  return cmd
-end
-
----@param pane_id string
----@return string[] command
-function M.focus_command(pane_id)
-  return { "tmux", "select-pane", "-t", pane_id }
-end
-
----@param pane_id string
----@param on_select fun(pane_id: string)
-function M.use_pane(pane_id, on_select)
-  if config.config.remember_last then
-    vim.g.sendit_pane = pane_id
+  vim.list_extend(
+    argv,
+    { "-F", "#{pane_id} #{session_name}:#{window_index}.#{pane_index} #{pane_tty} #{pane_current_command}" }
+  )
+  local out, err = run(argv)
+  if not out then
+    return nil, err
   end
-  on_select(pane_id)
-end
-
----@param on_select fun(pane_id: string)
-function M.select_pane(on_select)
-  ---@type sendit.Pane[]
-  local panes
-  if type(config.config.process_filter) == "function" then
-    panes = config.config.process_filter() or {}
-  else
-    local all_panes = vim.fn.systemlist(M.list_command())
-    ---@type string?
-    local current_pane = vim.env.TMUX_PANE
-    panes = vim
-      .iter(all_panes)
-      :map(function(pane)
-        ---@type string?, string?, string?
-        local tmux_id, id, rest = pane:match("^(%S+)%s(%S+)%s(.+)$")
-        if not (tmux_id and id and rest) then
-          return nil
-        end
-        ---@type sendit.Pane
-        return { tmux_id = tmux_id, id = id, command = rest }
-      end)
-      :filter(function(pane)
-        return not current_pane or pane.tmux_id ~= current_pane
-      end)
-      :totable()
-  end
-
-  -- Reuse remembered pane if it still exists and config says so
-  local remembered = vim.g.sendit_pane
-  if remembered then
-    for _, pane in ipairs(panes) do
-      if pane.id == remembered then
-        return on_select(remembered)
-      end
+  local panes = {}
+  for line in vim.gsplit(out, "\n", { trimempty = true }) do
+    local tmux_id, id, tty, cmd = line:match("^(%S+)%s(%S+)%s(%S+)%s(.+)$")
+    if not (tmux_id and tmux_id:match("^%%%d+$")) then
+      return nil, "tmux list-panes returned a malformed pane list"
     end
-    vim.g.sendit_pane = nil
-  end
-
-  -- Auto-select if only one pane available
-  if #panes == 1 then
-    return M.use_pane(panes[1].id, on_select)
-  end
-
-  if #panes == 0 then
-    vim.notify("Sendit: no target panes available", vim.log.levels.WARN)
-    return
-  end
-
-  local widths = { command_name = 0, id = 0 }
-  for _, p in ipairs(panes) do
-    widths.command_name = math.max(widths.command_name, #(p.agent or p.command))
-    widths.id = math.max(widths.id, #p.id)
-  end
-
-  local function pad(str, width)
-    return str .. string.rep(" ", width - #str)
-  end
-
-  vim.ui.select(panes, {
-    prompt = "Select target tmux pane:",
-    ---@param pane sendit.Pane
-    format_item = function(pane)
-      return table.concat({
-        pad(pane.agent and pane.agent or pane.command, widths.command_name),
-        pad(pane.id, widths.id),
-      }, " ")
-    end,
-  }, function(choice)
-    if choice then
-      M.use_pane(choice.id, on_select)
+    if tmux_id ~= vim.env.TMUX_PANE then
+      table.insert(panes, { tmux_id = tmux_id, id = id, pane_tty = tty, command = cmd })
     end
-  end)
+  end
+  return panes
 end
 
----@param text string
----@param pane_id string
-function M.send_to_pane(text, pane_id)
-  local cmd = M.send_command(text, pane_id)
-  vim.system(cmd, {}, function(result)
-    if result.code ~= 0 then
-      vim.schedule(function()
-        vim.notify("sendit: command failed: " .. (result.stderr or ""), vim.log.levels.ERROR)
-      end)
-    else
-      if config.config.focus_after_send then
-        vim.system(M.focus_command(pane_id))
-      end
-      vim.schedule(function()
-        vim.notify("Sent to pane '" .. pane_id .. "'")
-      end)
+function M.process_strings(panes)
+  local by_tty = {}
+  local out, err = run({ "ps", "-axo", "tty=,command=" })
+  if not out then
+    vim.notify("Sendit: could not list processes: " .. err, vim.log.levels.WARN)
+    out = ""
+  end
+  for line in vim.gsplit(out, "\n", { trimempty = true }) do
+    local tty, cmd = line:match("^%s*(%S+)%s+(.+)$")
+    if tty and tty:sub(1, 1) ~= "?" then
+      by_tty[tty] = by_tty[tty] or {}
+      table.insert(by_tty[tty], { cmd })
     end
-  end)
+  end
+  local procs = {}
+  for _, pane in ipairs(panes) do
+    procs[pane] = by_tty[(pane.pane_tty or ""):gsub("^/dev/", "")] or {}
+  end
+  return procs
+end
+
+function M.key(pane)
+  if pane.session == nil and pane.block_id == nil and type(pane.id) == "string" and pane.id ~= "" then
+    return pane.tmux_id or pane.id
+  end
+end
+
+function M.send_argv(pane, text)
+  if config.config.cmd then
+    return vim.list_extend(vim.list_slice(config.config.cmd), { pane.id, text })
+  end
+  return { "tmux", "send-keys", "-l", "-t", pane.tmux_id or pane.id, "--", text }
+end
+
+function M.focus_argv(pane)
+  return { "tmux", "select-pane", "-t", pane.tmux_id or pane.id }
 end
 
 return M
